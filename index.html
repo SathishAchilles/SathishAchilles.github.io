@@ -1,0 +1,134 @@
+<html>
+    <style>
+            /* DivTable.com */
+            .divTable{
+                display: table;
+                width: 100%;
+            }
+            .divTableRow {
+                display: table-row;
+            }
+            .divTableHeading {
+                background-color: #EEE;
+                display: table-header-group;
+            }
+            .divTableCell, .divTableHead {
+                border: 1px solid #999999;
+                display: table-cell;
+                padding: 3px 10px;
+            }
+            .divTableHeading {
+                background-color: #EEE;
+                display: table-header-group;
+                font-weight: bold;
+            }
+            .divTableFoot {
+                background-color: #EEE;
+                display: table-footer-group;
+                font-weight: bold;
+            }
+            .divTableBody {
+                display: table-row-group;
+            }
+    </style>
+    <body>
+        <form class="modal-content animate" onsubmit="getRepoDetails()" id="myForm">
+        <div class="container">
+            <label for="uname"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="uname" value="" required>
+      
+            <label for="psw"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="psw" value="" required>
+
+            <label for="file"><b>File To look for</b></label>
+            <input type="text" placeholder="Enter file URI path" name="filepath" value="/contents/Gemfile" required>
+
+            <label for="regex"><b>Regex/Substring to look for</b></label>
+            <input type="text" placeholder="Enter Regex to look for" name="regex" value="ruby '.*'" required>
+              
+            <button type="submit">Login</button>
+          </div>
+          </form>
+          <div class="divTable" id="repoTable">
+            <div class="divTableHeading">
+                <div class="divTableRow">
+                    <div class="divTableHead">Project</div>
+                    <div class="divTableHead">String</div>
+                </div>
+            </div>
+            <div class="divTableBody" id="repoTable">
+            </div>
+          </div>
+    </body>
+    <footer>https://about.me/sathish8</footer>
+
+    <script>
+    document.getElementById("myForm").onsubmit = function() {
+        event.preventDefault();
+        username = document.forms["myForm"].uname.value
+        password = document.forms["myForm"].psw.value
+        file_path = document.forms["myForm"].filepath.value
+        regex = new RegExp(document.forms["myForm"].regex.value)
+        token = 'Basic ' + btoa(username + ":" + password);
+        var repoListUrl = new URL("https://api.github.com/orgs/auto-grid/repos")
+        repoListUrl.searchParams.append("per_page", "100")
+        fetch(repoListUrl, {
+            method: "GET",
+            headers: {
+                "Authorization": token
+            }
+        })
+        .then(response => { return response.json() })
+        .then(data => {
+            for(var item in data){
+                var project = data[item]["full_name"]
+                var url = (data[item]['url'])
+                fetchFile(url, file_path, project, token, regex);
+            }
+        });      
+    };
+
+    function fetchFile(url, file_path, project, token, regex){
+        fetch((url + file_path), {
+                    method: "GET",
+                    credentials: 'same-origin',
+                    headers: {
+                        "Authorization": token
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok){
+                            return response.json()
+                        }else{
+                            throw new Error("response not okay");
+                        }
+                        })
+                    .then(data => {
+                        content = atob(data['content'])
+                        content = content.match(regex)
+                        str = document.createTextNode(content[0]);
+                        prj = document.createTextNode(project)
+
+                        repoRow = document.createElement("div");
+                        repoRow.setAttribute("class", "divTableRow");
+
+                        repoStr = document.createElement("div")
+                        repoStr.setAttribute("class", "divTableCell")
+                        repoStr.appendChild(str)
+
+                        repoPrj = document.createElement("div")
+                        repoPrj.setAttribute("class", "divTableCell")
+                        repoPrj.appendChild(prj)
+
+                        repoRow.appendChild(repoPrj)
+                        repoRow.appendChild(repoStr)
+                        
+                        repoTable = document.getElementById("repoTable")
+                        repoTable.appendChild(repoRow)
+                    })
+                    .catch(error => {});
+        }
+    </script>
+</html>
+
+
