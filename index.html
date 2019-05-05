@@ -82,16 +82,24 @@
             <div class="searchCard" id="searchCard">
                 <div class="fileForm">
                     <form id="SearchForm">
-                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                            <input class="mdl-textfield__input" type="text" name="filepath" value="/contents/Gemfile" name="filepath" required>
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" name="org" value="auto-grid" required>
+                            <label class="mdl-textfield__label">Organization To look for</label>
+                            <span class="mdl-textfield__error">Enter a valid Org!</span>
+                        </div>
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" name="filepath" value="/contents/Gemfile" required>
                             <label class="mdl-textfield__label">File To look for</label>
+                            <span class="mdl-textfield__error">Enter a valid FilePath!</span>
                         </div>
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                             <input class="mdl-textfield__input" type="text" value="ruby '.*'" name="regex" required>
                             <label class="mdl-textfield__label" >Regex/Substring to look for</label>
-                            <span class="mdl-textfield__error">Enter a valid email!</span>
+                            <span class="mdl-textfield__error">Enter a valid regex!</span>
                         </div>
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-button--disabled" type="submit">Search</button>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-button--disabled" type="submit">
+                            Search
+                        </button>
                     </form>
                 </div> 
             </div>
@@ -103,8 +111,6 @@
                         <th class="mdl-data-table__cell--non-numeric">Search String</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
                 </table>
             </div>
         </main>
@@ -126,7 +132,9 @@
         // global stuff
         var username;
         var password;
-        var org = "auto-grid"
+        var org;
+        var gitApi = "https://api.github.com"
+        var repoTable = document.querySelector("table#repoTable")
         // show login modal on load
         var dialog = document.querySelector('dialog#loginDialogue');
         dialog.showModal();
@@ -150,8 +158,10 @@
             event.preventDefault();
             file_path = document.forms["SearchForm"].filepath.value
             regex = new RegExp(document.forms["SearchForm"].regex.value)
+            org = document.forms["SearchForm"].org.value
             token = 'Basic ' + btoa(username + ":" + password);
-            var repoListUrl = new URL("https://api.github.com/orgs/auto-grid/repos")
+            url = `${gitApi}/orgs/${org}/repos`;
+            repoListUrl = new URL(url)
             repoListUrl.searchParams.append("per_page", "100")
             fetch(repoListUrl, {
                 method: "GET",
@@ -161,6 +171,13 @@
             })
             .then(response => { return response.json() })
             .then(data => {
+                // clear the previous results if any
+                repoBody = repoTable.querySelector("tbody");
+                if (repoBody !== null) {
+                    repoTable.removeChild(repoBody);
+                }
+                // new body
+                repoTable.appendChild(document.createElement('tbody'))
                 for(var item in data){
                     var project = data[item]["full_name"]
                     var url = (data[item]['url'])
@@ -208,8 +225,9 @@
                             repoRow.appendChild(repoPrj)
                             repoRow.appendChild(repoStr)
                             
-                            repoTable = document.querySelector("table#repoTable tbody")
-                            repoTable.appendChild(repoRow)
+                            
+                            repoBody = repoTable.querySelector("tbody");
+                            repoBody.appendChild(repoRow)
                             
                         })
                         .catch(error => {});
