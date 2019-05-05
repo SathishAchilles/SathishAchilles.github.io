@@ -1,133 +1,215 @@
 <html>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <style>
-            /* DivTable.com */
-            .divTable{
-                display: table;
-                width: 100%;
-            }
-            .divTableRow {
-                display: table-row;
-            }
-            .divTableHeading {
-                background-color: #EEE;
-                display: table-header-group;
-            }
-            .divTableCell, .divTableHead {
-                border: 1px solid #999999;
-                display: table-cell;
-                padding: 3px 10px;
-            }
-            .divTableHeading {
-                background-color: #EEE;
-                display: table-header-group;
-                font-weight: bold;
-            }
-            .divTableFoot {
-                background-color: #EEE;
-                display: table-footer-group;
-                font-weight: bold;
-            }
-            .divTableBody {
-                display: table-row-group;
-            }
+            /* to remove */
+        .mdl-card__actions {
+        outline: skyblue solid 5px;
+        z-index: 4;
+        }
+        .mdl-button {
+            margin-left: 10px ;    
+        }
+        .mdl-card__title-text {
+        position: relative;
+        top: 6px;
+        
+        }
+        .searchCard {
+        height: 300px;
+        width:100%;
+        display:flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        }
+        .mdl-textfield {
+        width: 250px;
+        margin-right: 10px;
+        }
+        .mdl-layout__content {
+            padding: 24px;
+        }
+        .fileForm {
+            align-items: center;
+        justify-content: center;
+        }
+        .hidden {
+            display: none;
+        }
+        .table_card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
-    <body>
-        <form class="modal-content animate" onsubmit="getRepoDetails()" id="myForm">
-        <div class="container">
-            <label for="uname"><b>Username</b></label>
-            <input type="text" placeholder="Enter Username" name="uname" value="" required>
-      
-            <label for="psw"><b>Password</b></label>
-            <input type="password" placeholder="Enter Password" name="psw" value="" required>
-
-            <label for="file"><b>File To look for</b></label>
-            <input type="text" placeholder="Enter file URI path" name="filepath" value="/contents/Gemfile" required>
-
-            <label for="regex"><b>Regex/Substring to look for</b></label>
-            <input type="text" placeholder="Enter Regex to look for" name="regex" value="ruby '.*'" required>
-              
-            <button type="submit">Login</button>
-          </div>
-          </form>
-          <div class="divTable" id="repoTable">
-            <div class="divTableHeading">
-                <div class="divTableRow">
-                    <div class="divTableHead">Project</div>
-                    <div class="divTableHead">String</div>
+    <!-- Login Modal -->
+    <dialog class="mdl-dialog" id="loginDialogue">
+        <div class=" mdl-color--primary mdl-color-text--white">
+            <h2 class="mdl-dialog__title">Login</h2>
+        </div>
+        <div class="mdl-dialog__content">
+            <form id="loginForm">
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" type="text" id="username" name="username" required/>
+                    <label class="mdl-textfield__label" for="username">Username</label>
+                    <span class="mdl-textfield__error">Required Field </span>
                 </div>
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" type="password" id="userpass" name="password" required/>
+                    <label class="mdl-textfield__label" for="userpass">Password</label>
+                    <span class="mdl-textfield__error">Required Field</span>
+                </div>
+                <div class="mdl-dialog__actions">
+                        <button type="submit" class="mdl-button" id="loginSubmit">Log in</button>
+                </div>
+            </form>
+        </div>
+        
+    </dialog>
+
+    <!-- Content -->
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">Github Repo Search</span>
             </div>
-            <div class="divTableBody" id="repoTable">
+        </header>
+        <main class="mdl-layout__content">
+            <div class="page-content">            
+            <div class="searchCard" id="searchCard">
+                <div class="fileForm">
+                    <form id="SearchForm">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" name="filepath" value="/contents/Gemfile" name="filepath" required>
+                            <label class="mdl-textfield__label">File To look for</label>
+                        </div>
+                        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                            <input class="mdl-textfield__input" type="text" value="ruby '.*'" name="regex" required>
+                            <label class="mdl-textfield__label" >Regex/Substring to look for</label>
+                            <span class="mdl-textfield__error">Enter a valid email!</span>
+                        </div>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent mdl-button--disabled" type="submit">Search</button>
+                    </form>
+                </div> 
             </div>
-          </div>
-    </body>
-    <footer>https://about.me/sathish8</footer>
+            <div class="table_card hidden" id="table_card">
+                <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp" id="repoTable">
+                    <thead>
+                        <tr>
+                        <th class="mdl-data-table__cell--non-numeric">Project</th>
+                        <th class="mdl-data-table__cell--non-numeric">Search String</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+            <footer class="mdl-mega-footer">
+                <a rel="stylesheet" href="https://about.me/sathish8">Authored by Sathish</a> 
+                Powered by Github
+            </footer>
+    </div>
 
     <script>
-    document.getElementById("myForm").onsubmit = function() {
-        event.preventDefault();
-        username = document.forms["myForm"].uname.value
-        password = document.forms["myForm"].psw.value
-        file_path = document.forms["myForm"].filepath.value
-        regex = new RegExp(document.forms["myForm"].regex.value)
-        token = 'Basic ' + btoa(username + ":" + password);
-        var repoListUrl = new URL("https://api.github.com/orgs/auto-grid/repos")
-        repoListUrl.searchParams.append("per_page", "100")
-        fetch(repoListUrl, {
-            method: "GET",
-            headers: {
-                "Authorization": token
-            }
-        })
-        .then(response => { return response.json() })
-        .then(data => {
-            for(var item in data){
-                var project = data[item]["full_name"]
-                var url = (data[item]['url'])
-                fetchFile(url, file_path, project, token, regex);
-            }
-        });      
-    };
+        // document.querySelector('#p1').addEventListener('mdl-componentupgraded', function() {
+        //     this.MaterialProgress.setProgress(44);
+        // });
 
-    function fetchFile(url, file_path, project, token, regex){
-        fetch((url + file_path), {
-                    method: "GET",
-                    credentials: 'same-origin',
-                    headers: {
-                        "Authorization": token
-                        }
-                    })
-                    .then(response => {
-                        if (response.ok){
-                            return response.json()
-                        }else{
-                            throw new Error("response not okay");
-                        }
+        // global stuff
+        var username;
+        var password;
+        var org = "auto-grid"
+        // show login modal on load
+        var dialog = document.querySelector('dialog#loginDialogue');
+        dialog.showModal();
+            
+        // get credentials from modal dialogue
+        dialog.querySelector('#loginForm').onsubmit = function() {
+            event.preventDefault();
+            loginForm = document.forms["loginForm"];
+            username = loginForm.username.value;
+            password = loginForm.password.value;
+            // enable the search button
+            searchButton = document.querySelector("form#SearchForm button");
+            searchButton.classList.remove("mdl-button--disabled");
+            dialog.close();
+        };
+        
+        document.getElementById("SearchForm").onsubmit = function() {
+            if ((typeof username === "undefined") && (typeof password === "undefined")) {
+                alert("username and password is empty");
+            }
+            event.preventDefault();
+            file_path = document.forms["SearchForm"].filepath.value
+            regex = new RegExp(document.forms["SearchForm"].regex.value)
+            token = 'Basic ' + btoa(username + ":" + password);
+            var repoListUrl = new URL("https://api.github.com/orgs/auto-grid/repos")
+            repoListUrl.searchParams.append("per_page", "100")
+            fetch(repoListUrl, {
+                method: "GET",
+                headers: {
+                    "Authorization": token
+                }
+            })
+            .then(response => { return response.json() })
+            .then(data => {
+                for(var item in data){
+                    var project = data[item]["full_name"]
+                    var url = (data[item]['url'])
+                    fetchFile(url, file_path, project, token, regex);
+                }
+                table = document.getElementById("table_card")
+                table.classList.remove("hidden") // visible the table
+                // adjust search card height
+                searchCard = document.getElementById("searchCard")
+                searchCard.style.height = "100px"
+            });      
+        };
+
+        function fetchFile(url, file_path, project, token, regex){
+            fetch((url + file_path), {
+                        method: "GET",
+                        credentials: 'same-origin',
+                        headers: {
+                            "Authorization": token
+                            }
                         })
-                    .then(data => {
-                        content = atob(data['content'])
-                        content = content.match(regex)
-                        str = document.createTextNode(content[0]);
-                        prj = document.createTextNode(project)
+                        .then(response => {
+                            if (response.ok){
+                                return response.json()
+                            }else{
+                                throw new Error("response not okay");
+                            }
+                            })
+                        .then(data => {
+                            content = atob(data['content'])
+                            content = content.match(regex)
+                            str = document.createTextNode(content[0]);
+                            prj = document.createTextNode(project)
 
-                        repoRow = document.createElement("div");
-                        repoRow.setAttribute("class", "divTableRow");
+                            repoRow = document.createElement("tr");
 
-                        repoStr = document.createElement("div")
-                        repoStr.setAttribute("class", "divTableCell")
-                        repoStr.appendChild(str)
+                            repoStr = document.createElement("td")
+                            repoStr.setAttribute("class", "mdl-data-table__cell--non-numeric")
+                            repoStr.appendChild(str)
 
-                        repoPrj = document.createElement("div")
-                        repoPrj.setAttribute("class", "divTableCell")
-                        repoPrj.appendChild(prj)
+                            repoPrj = document.createElement("td")
+                            repoPrj.setAttribute("class", "mdl-data-table__cell--non-numeric")
+                            repoPrj.appendChild(prj)
 
-                        repoRow.appendChild(repoPrj)
-                        repoRow.appendChild(repoStr)
-                        
-                        repoTable = document.getElementById("repoTable")
-                        repoTable.appendChild(repoRow)
-                    })
-                    .catch(error => {});
-        }
+                            repoRow.appendChild(repoPrj)
+                            repoRow.appendChild(repoStr)
+                            
+                            repoTable = document.querySelector("table#repoTable tbody")
+                            repoTable.appendChild(repoRow)
+                            
+                        })
+                        .catch(error => {});
+            }
     </script>
 </html>
 
