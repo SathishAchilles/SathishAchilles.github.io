@@ -44,6 +44,21 @@
             justify-content: center;
             align-items: center;
         }
+        .spinnerBackground {
+            background: none repeat scroll 0 0 black;
+            position: fixed;
+            display: block;
+            opacity: 0.5;
+            z-index: 1000001;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+        }
+        .spinnerPosition {
+            top: 50%;
+            left: 50%;
+        }
     </style>
     <!-- Login Modal -->
     <dialog class="mdl-dialog" id="loginDialogue">
@@ -88,7 +103,7 @@
                             <span class="mdl-textfield__error">Enter a valid Org!</span>
                         </div>
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                            <input class="mdl-textfield__input" type="text" name="filepath" value="/contents/Gemfile" required>
+                            <input class="mdl-textfield__input" type="text" name="filepath" value="Gemfile" required>
                             <label class="mdl-textfield__label">File To look for</label>
                             <span class="mdl-textfield__error">Enter a valid FilePath!</span>
                         </div>
@@ -114,97 +129,150 @@
                 </table>
             </div>
         </main>
-            <footer class="mdl-mega-footer">
-                    <button type="submit" class="mdl-button mdl-mega-footer__left-section" id="loginSubmit"> Powered by
-                        <a href="https://about.me/sathish8">Sathish</a>
-                    </button>
-                    <button type="submit" class="mdl-button mdl-mega-footer__right-section" id="loginSubmit">
-                            <a href="https://github.com/">Github</a>
-                    </button>
-            </footer>
+        <footer class="mdl-mega-footer">
+            <button type="submit" class="mdl-button mdl-mega-footer__left-section" id="loginSubmit"> Powered by
+                <a href="https://about.me/sathish8">Sathish</a>
+            </button>
+            <button type="submit" class="mdl-button mdl-mega-footer__right-section" id="loginSubmit">
+                    <a href="https://github.com/">Github</a>
+            </button>
+        </footer>
+    </div>
+    <div class="spinnerBackground hidden">
+        <div id="loader" class="mdl-spinner mdl-js-spinner spinnerPosition"></div>
     </div>
 
-    <script>
-        // document.querySelector('#p1').addEventListener('mdl-componentupgraded', function() {
-        //     this.MaterialProgress.setProgress(44);
-        // });
+    <dialog class="mdl-dialog" id="errorDialogue">
+        <div class=" mdl-color--primary mdl-color-text--white">
+            <h2 class="mdl-dialog__title">Error</h2>
+        </div>
+        <div class="mdl-dialog__content">
+            <div id="message">
+            </div>
+        </div>
+        <div class="mdl-dialog__actions">
+            <button type="button" class='mdl-button close'>Close</button>
+        </div>
+    </dialog>
 
+    <script>
         // global stuff
         var username;
         var password;
         var org;
-        var gitApi = "https://api.github.com"
-        var repoTable = document.querySelector("table#repoTable")
+        var gitApi = 'https://api.github.com'
+        var repoTable = document.querySelector('table#repoTable');
+        var spinnerDom = document.querySelector('div.spinnerBackground');
+
+        // event listeners on load
+        dialogs = document.querySelectorAll('dialog');
+
+        dialogs.forEach((dialog) => {
+            closeButton = dialog.querySelector('.close');
+            if (closeButton == null) {
+                return;
+            };
+            closeButton.addEventListener('click', function() {
+                dialog.close();
+            });
+        });
+
         // show login modal on load
-        var dialog = document.querySelector('dialog#loginDialogue');
-        dialog.showModal();
+        var dialogLogin = document.querySelector('dialog#loginDialogue');
+        dialogLogin.showModal();
+
+
             
         // get credentials from modal dialogue
-        dialog.querySelector('#loginForm').onsubmit = function() {
+        dialogLogin.querySelector('#loginForm').onsubmit = function() {
             event.preventDefault();
-            loginForm = document.forms["loginForm"];
+            loginForm = document.forms['loginForm'];
             username = loginForm.username.value;
             password = loginForm.password.value;
             // enable the search button
-            searchButton = document.querySelector("form#SearchForm button");
-            searchButton.classList.remove("mdl-button--disabled");
-            dialog.close();
+            searchButton = document.querySelector('form#SearchForm button');
+            searchButton.classList.remove('mdl-button--disabled');
+            dialogLogin.close();
         };
         
-        document.getElementById("SearchForm").onsubmit = function() {
-            if ((typeof username === "undefined") && (typeof password === "undefined")) {
-                alert("username and password is empty");
-            }
+        document.getElementById('SearchForm').onsubmit = function() {
             event.preventDefault();
-            file_path = document.forms["SearchForm"].filepath.value
-            regex = new RegExp(document.forms["SearchForm"].regex.value)
-            org = document.forms["SearchForm"].org.value
-            token = 'Basic ' + btoa(username + ":" + password);
+            if ((typeof username === 'undefined') && (typeof password === 'undefined')) {
+                alert('username and password is empty');
+            }
+            // start loader and Opaque Background
+            spinner(true);
+           
+            file_path = document.forms['SearchForm'].filepath.value
+            file_path = `contents/${file_path}`
+            regex = new RegExp(document.forms['SearchForm'].regex.value)
+            org = document.forms['SearchForm'].org.value
+            token = 'Basic ' + btoa(username + ':' + password);
             url = `${gitApi}/orgs/${org}/repos`;
             repoListUrl = new URL(url)
-            repoListUrl.searchParams.append("per_page", "100")
+            repoListUrl.searchParams.append('per_page', '100')
+            
             fetch(repoListUrl, {
-                method: "GET",
+                method: 'GET',
                 headers: {
-                    "Authorization": token
+                    'Authorization': token
                 }
             })
-            .then(response => { return response.json() })
+            .then(response => { 
+                if (response.ok){
+                    return response.json()
+                }else{
+                    throw new Error(response.statusText);
+                };
+             })
             .then(data => {
                 // clear the previous results if any
-                repoBody = repoTable.querySelector("tbody");
+                counter = data.length;
+                if (counter < 1) {
+                    return alert(error);
+                }
+                repoBody = repoTable.querySelector('tbody');
                 if (repoBody !== null) {
                     repoTable.removeChild(repoBody);
                 }
                 // new body
                 repoTable.appendChild(document.createElement('tbody'))
                 for(var item in data){
-                    var project = data[item]["full_name"]
-                    var url = (data[item]['url'])
-                    fetchFile(url, file_path, project, token, regex);
+                    project = data[item]['full_name']
+                    url = (data[item]['url'])
+                    counter --;
+                    fetchFile(url, file_path, project, token, regex, counter);
                 }
-                table = document.getElementById("table_card")
-                table.classList.remove("hidden") // visible the table
+                table = document.getElementById('table_card')
+                table.classList.remove('hidden') // visible the table
                 // adjust search card height
-                searchCard = document.getElementById("searchCard")
-                searchCard.style.height = "100px"
+                searchCard = document.getElementById('searchCard')
+                searchCard.style.height = '100px'
+                
+            })
+            .catch(error => {
+                displayErrorDialog(error);
             });      
         };
 
-        function fetchFile(url, file_path, project, token, regex){
-            fetch((url + file_path), {
-                        method: "GET",
+        function fetchFile(url, file_path, project, token, regex, counter){
+            url = `${url}/${file_path}`
+            fetch(url, {
+                        method: 'GET',
                         credentials: 'same-origin',
                         headers: {
-                            "Authorization": token
+                            'Authorization': token
                             }
                         })
                         .then(response => {
+                            if (counter == 0){
+                                spinner(false);
+                            };
                             if (response.ok){
                                 return response.json()
                             }else{
-                                throw new Error("response not okay");
-                            }
+                                throw new Error('response not okay');
+                            };
                             })
                         .then(data => {
                             content = atob(data['content'])
@@ -212,26 +280,46 @@
                             str = document.createTextNode(content[0]);
                             prj = document.createTextNode(project)
 
-                            repoRow = document.createElement("tr");
+                            repoRow = document.createElement('tr');
 
-                            repoStr = document.createElement("td")
-                            repoStr.setAttribute("class", "mdl-data-table__cell--non-numeric")
+                            repoStr = document.createElement('td')
+                            repoStr.setAttribute('class', 'mdl-data-table__cell--non-numeric')
                             repoStr.appendChild(str)
 
-                            repoPrj = document.createElement("td")
-                            repoPrj.setAttribute("class", "mdl-data-table__cell--non-numeric")
+                            repoPrj = document.createElement('td')
+                            repoPrj.setAttribute('class', 'mdl-data-table__cell--non-numeric')
                             repoPrj.appendChild(prj)
 
                             repoRow.appendChild(repoPrj)
                             repoRow.appendChild(repoStr)
                             
                             
-                            repoBody = repoTable.querySelector("tbody");
+                            repoBody = repoTable.querySelector('tbody');
                             repoBody.appendChild(repoRow)
-                            
                         })
                         .catch(error => {});
             }
+    
+        function spinner(start){
+            if (start == true){
+                spinnerDom.classList.remove('hidden');
+                spinnerDom.querySelector('div#loader').classList.add('is-active');
+            }else{
+                spinnerDom.classList.add('hidden');
+                spinnerDom.querySelector('div#loader').classList.remove('is-active');
+            }
+            
+        }
+
+        function displayErrorDialog(error){
+            errorDialog = document.querySelector('dialog#errorDialogue');
+            errorDialogMsg = errorDialog.querySelector('div#message');
+            errorDialogMsg.innerText = ''
+            errorMsg = document.createTextNode(error);
+            errorDialogMsg.appendChild(errorMsg);
+            spinner(false);
+            errorDialog.showModal();
+        }
     </script>
 </html>
 
