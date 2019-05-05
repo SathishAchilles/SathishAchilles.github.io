@@ -89,7 +89,7 @@
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
         <header class="mdl-layout__header">
             <div class="mdl-layout__header-row">
-            <span class="mdl-layout-title">Github Repo Search</span>
+            <span class="mdl-layout-title">Github Repo Scan</span>
             </div>
         </header>
         <main class="mdl-layout__content">
@@ -123,7 +123,7 @@
                     <thead>
                         <tr>
                         <th class="mdl-data-table__cell--non-numeric">Project</th>
-                        <th class="mdl-data-table__cell--non-numeric">Search String</th>
+                        <th class="mdl-data-table__cell--non-numeric">Matched Search String</th>
                         </tr>
                     </thead>
                 </table>
@@ -237,18 +237,17 @@
                 }
                 // new body
                 repoTable.appendChild(document.createElement('tbody'))
-                for(var item in data){
-                    project = data[item]['full_name']
-                    url = (data[item]['url'])
+                data.forEach((item) =>{
+                    project = item['full_name']
+                    url = item['url']
                     counter --;
                     fetchFile(url, file_path, project, token, regex, counter);
-                }
+                })
                 table = document.getElementById('table_card')
                 table.classList.remove('hidden') // visible the table
                 // adjust search card height
                 searchCard = document.getElementById('searchCard')
                 searchCard.style.height = '100px'
-                
             })
             .catch(error => {
                 displayErrorDialog(error);
